@@ -31,13 +31,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        //
-        try {
-            // obtenemos el token de la cabecera Authorization
-            String jwt = getJwtFromRequest(request);
+        // Endpoints que no requieren autenticacion
+        if (request.getRequestURI().startsWith("/api/auth/") ||
+        request.getRequestURI().startsWith("/api/users/register")) {
+            // si la peticion es a /api/auth/ o /api/users/register, no se requiere autenticacion
+            filterChain.doFilter(request, response);
+            return;
 
+        }
+
+        // obtenemos el token de la cabecera Authorization
+        String jwt = getJwtFromRequest(request);
+
+        if (jwt == null) {
+            // si no hay token, continuamos con la cadena de filtros
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
             // comprobamos si el token es valido
-            if (jwt != null && jwtTokenProvider.validateToken(jwt)) {
+
+            if (!jwtTokenProvider.validateToken(jwt)) {
+                System.out.println("Token invalido o expirado");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write(
+                        "{\"status\":401,\"message\":\"Token invalido o expirado\"}"
+                );
+                return; // si el token es invalido, no continuamos con la cadena de filtros
+            }
                 // obtenemos el username
                 String username = jwtTokenProvider.getUsernameFromToken(jwt);
                 // cargamos los detalles del usuario
@@ -55,9 +78,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // y no se necesita volver a autenticar en cada peticion
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+
         } catch (Exception e) {
-            logger.error("No se puede autenticar el usuario", e);
+            // Esto asegura que el error se propague correctamente
+            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(
+                    "{" +
+                            "\"status\": 401, " +
+                            "\"message\": \"Error al procesar el token: " + e.getMessage() + "\"" +
+                            "}"
+            );
         }
         // el filtro continua con la siguiente cadena de filtros
         filterChain.doFilter(request, response); // esto permite que siga norma

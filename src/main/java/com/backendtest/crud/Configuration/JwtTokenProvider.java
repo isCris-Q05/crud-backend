@@ -1,5 +1,6 @@
 package com.backendtest.crud.Configuration;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -9,10 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class JwtTokenProvider {
@@ -54,22 +52,49 @@ public class JwtTokenProvider {
     // metodo para invalidar tokens o logout
 
     public void invalidateToken(String token) {
-        // agrega el token a la lista de tokens invalidados
-        invalidatedTokens.add(token);
+        try {
+            // extraemos username y expiracion del token
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            // calculamos tiempo restante del token
+            long remainingTime = claims.getExpiration().getTime() - System.currentTimeMillis();
+
+            if(remainingTime > 0) {
+                invalidatedTokens.add(token);
+                // Programamos eliminación después de la expiración
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        invalidatedTokens.remove(token);
+                    }
+                }, remainingTime);
+            }
+        } catch (Exception e) {
+            System.out.println("Error invalidando token: " + e.getMessage());
+            // mandamos error en un JSON
+            throw new RuntimeException("{\"error\": \"Error invalidando token: " + e.getMessage() + "\"}");        }
     }
 
-    // valida el token JWT
     public boolean validateToken(String token) {
-        try{
-            // verificamos si el token esta en la lista de tokens invalidados
+        try {
+            System.out.println("Validando token ...: " + token);
+            System.out.println("Tokens invalidados actuales: " + invalidatedTokens);
+
+            // Verificar primero si el token está invalidado
             if (invalidatedTokens.contains(token)) {
+                System.out.println("Token encontrado como invalido: " + token);
                 return false;
             }
-            // intenta parsear el token con la clave secreta
+
+            // Luego verificar validez JWT (firma y expiración)
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            System.out.println("Token valido: " + token);
             return true;
         } catch (Exception e) {
-            // si ocurre una excepcion, el token no es valido
+            System.out.println("Error validando: " + e.getMessage());
             return false;
         }
     }
