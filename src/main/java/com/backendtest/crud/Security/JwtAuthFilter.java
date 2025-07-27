@@ -31,25 +31,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        // Endpoints que no requieren autenticacion
-        if (request.getRequestURI().startsWith("/api/auth/") ||
-        request.getRequestURI().startsWith("/api/users/register")) {
-            // si la peticion es a /api/auth/ o /api/users/register, no se requiere autenticacion
-            filterChain.doFilter(request, response);
-            return;
+        try{
+            // Endpoints que no requieren autenticacion
+            if (request.getRequestURI().startsWith("/api/auth/") ||
+                    request.getRequestURI().startsWith("/api/users/register")) {
+                // si la peticion es a /api/auth/ o /api/users/register, no se requiere autenticacion
+                filterChain.doFilter(request, response);
+                return;
 
-        }
+            }
 
-        // obtenemos el token de la cabecera Authorization
-        String jwt = getJwtFromRequest(request);
+            // obtenemos el token de la cabecera Authorization
+            String jwt = getJwtFromRequest(request);
 
-        if (jwt == null) {
-            // si no hay token, continuamos con la cadena de filtros
-            filterChain.doFilter(request, response);
-            return;
-        }
+            if (jwt == null) {
+                // si no hay token, continuamos con la cadena de filtros
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-        try {
             // comprobamos si el token es valido
 
             if (!jwtTokenProvider.validateToken(jwt)) {
@@ -61,25 +61,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 );
                 return; // si el token es invalido, no continuamos con la cadena de filtros
             }
-                // obtenemos el username
-                String username = jwtTokenProvider.getUsernameFromToken(jwt);
-                // cargamos los detalles del usuario
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            // obtenemos el username
+            String username = jwtTokenProvider.getUsernameFromToken(jwt);
+            // cargamos los detalles del usuario
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // creamos un objeto de autenticacion
-                // y lo seteamos en el contexto de seguridad
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities()
-                        );
+            // creamos un objeto de autenticacion
+            // y lo seteamos en el contexto de seguridad
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities()
+                    );
 
-                // seteamos el contexto de seguridad con la autenticacion
-                // el usuario es autenticado dentro de la aplicacion
-                // y no se necesita volver a autenticar en cada peticion
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            // seteamos el contexto de seguridad con la autenticacion
+            // el usuario es autenticado dentro de la aplicacion
+            // y no se necesita volver a autenticar en cada peticion
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
 
-        } catch (Exception e) {
+
+        catch (Exception e) {
             // Esto asegura que el error se propague correctamente
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

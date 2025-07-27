@@ -31,16 +31,6 @@ public class UserService {
     private AuthenticationManager authenticationManager;
 
     public List<User> getAllUsers() {
-        // verificamos si el usuario esta autenticado
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("Usuario autenticado: " + (authentication != null ? authentication.getName() : "Ninguno"));
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Usuario no autenticado"
-            );
-        }
         // ira dentro de un try catch, para manejar excepciones
         try {
             // validamos si esta autenticado
@@ -91,12 +81,24 @@ public class UserService {
                         "El nombre de usuario ya existe"
                 );
             }
+
+            // verificamos si el  email ya existe
+            if (user.getEmail() != null && !user.getEmail().isEmpty() &&
+            userRepository.findByEmail(user.getEmail()) != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "El email ya esta en uso"
+                );
+            }
             // generamos un password hasheado
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             // guardamos el usuario en la base de datos
             return userRepository.save(user);
         } catch (ResponseStatusException e) {
+            System.out.println("Error: " + e.getMessage());
+            // lo mostramos en formato JSON
             throw e; // si hay un error, lanzamos la excepcion
+
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,

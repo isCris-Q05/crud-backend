@@ -14,4 +14,6 @@ import org.springframework.stereotype.Repository;
 // esto nos dara a los metodos CRUD basicos
 public interface  UserRepository extends JpaRepository<User, Long> {
     User findByUsername(String username);
+    // Buscamos un usuario por su email
+    User findByEmail(String email);
 }
