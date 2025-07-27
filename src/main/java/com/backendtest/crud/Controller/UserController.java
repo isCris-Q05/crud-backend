@@ -1,5 +1,6 @@
 package com.backendtest.crud.Controller;
 
+import com.backendtest.crud.Configuration.JwtTokenProvider;
 import com.backendtest.crud.DTO.ApiResponse;
 import com.backendtest.crud.Entity.User;
 import com.backendtest.crud.Service.UserService;
@@ -65,8 +66,15 @@ public class UserController {
 
     // endpoint para actualizar un usuario
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        User updatedUser = userService.updateUser(id, userDetails);
+    public ResponseEntity<ApiResponse<User>> updateUser(
+            @PathVariable Long id,
+            @RequestBody User userDetails,
+            @RequestHeader("Authorization") String token // O usa Spring Security para obtener el username
+    ) {
+        // Extraer el username del token (ejemplo simplificado)
+        String currentUsername = extractUsernameFromToken(token);
+
+        User updatedUser = userService.updateUser(id, userDetails, currentUsername);
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         HttpStatus.OK.value(),
@@ -74,6 +82,16 @@ public class UserController {
                         updatedUser
                 )
         );
+    }
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    // metodo para extraer el username del token
+    private String extractUsernameFromToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        return jwtTokenProvider.getUsernameFromToken(token);
     }
 
     // endpoint para eliminar un usuario

@@ -112,33 +112,45 @@ public class UserService {
     }
 
     // metodo para actualizar un usuario
-    public User updateUser(Long id, User userDetails) {
-        // ira dentro de un try catch, para manejar excepciones
+    public User updateUser(Long id, User userDetails, String currentUsername) {
         try {
-            // verificamos si el usuario existe
-            // buscamos el usuario por el id
             User user = userRepository.findById(id).orElseThrow(
                     () -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND,
                             "Usuario no encontrado con id: " + id
                     )
-            ); // si no se encuentra, lanzamos una excepcion
-            // ahora si el usuario al cambiar por otro nombre ya existe
-            User existingUser = userRepository.findByUsername(userDetails.getUsername());
-            if (existingUser != null && !existingUser.getId().equals(id)) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "El nombre de usuario ya existe"
-                );
-            }
-            user.setEmail(userDetails.getEmail());
-            user.setUsername(userDetails.getUsername());
+            );
 
-            // Actualizamos la contraseña solo si se proporciona una nueva
+            // 1. validacion y actualizacion del username
+            // solo si es diferente y no existe
+            if (userDetails.getUsername() != null &&
+            !userDetails.getUsername().equals(user.getUsername())) {
+                User existingUser = userRepository.findByUsername(userDetails.getUsername());
+                // si el username ya existe, lanzamos una excepcion
+                if (existingUser != null) {
+                    throw new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "El nombre de usuario ya existe"
+                    );
+                }
+                // actualizamos el username
+                user.setUsername(userDetails.getUsername());
+            }
+            // 2. actualizacion de los otros campos
+            if (userDetails.getEmail() != null) {
+                user.setEmail(userDetails.getEmail());
+            }
+
             if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
                 user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
             }
-            return userRepository.save(user);
+            if (userDetails.getProfilePictureLink() != null) {
+                user.setProfilePictureLink(userDetails.getProfilePictureLink());
+            }
+
+            // Setear updated_by con el username del usuario que realiza la actualización
+            user.setUpdatedBy(currentUsername);
+            return userRepository.save(user); // @PreUpdate actualizará automáticamente updated_at
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
@@ -147,8 +159,6 @@ public class UserService {
                     "Error al actualizar el usuario: " + e.getMessage()
             );
         }
-
-
     }
 
     //  metodo para eliminar un usuario
