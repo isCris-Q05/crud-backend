@@ -1,11 +1,15 @@
 package com.backendtest.crud.Controller;
 
+import com.backendtest.crud.DTO.ApiResponse;
 import com.backendtest.crud.Entity.User;
 import com.backendtest.crud.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,42 +22,71 @@ public class UserController {
 
     // endpoint para obtener todos los usuarios
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        HttpStatus.OK.value(),
+                        "Usuarios obtenidos exitosamente",
+                        users
+                )
+        );
     }
 
     // endpoint para obtener un usuario por id
     @GetMapping("/{id}")
-    public Optional<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {
+        User user = userService.getUserById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Usuario no encontrado con id: " + id
+                ));
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        HttpStatus.OK.value(),
+                        "Usuario encontrado exitosamente",
+                        user
+                )
+        );
     }
 
     // endpoint para crear un usuario
     @PostMapping("/register")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
-        try {
-            User createdUser = userService.createUser(user);
-            return ResponseEntity.ok(createdUser);
-        } catch (Exception e) {
-            throw e;
-        }
+    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody User user) {
+        User createdUser = userService.createUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                new ApiResponse<>(
+                        HttpStatus.CREATED.value(),
+                        "Usuario creado exitosamente",
+                        createdUser
+                )
+        );
     }
 
     // endpoint para actualizar un usuario
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        try{
-            User updatedUser = userService.updateUser(id, userDetails);
-            return ResponseEntity.ok(updatedUser);
-        } catch (Exception e) {
-            throw e;
-        }
+    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+        User updatedUser = userService.updateUser(id, userDetails);
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        HttpStatus.OK.value(),
+                        "Usuario actualizado exitosamente",
+                        updatedUser
+                )
+        );
     }
 
     // endpoint para eliminar un usuario
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        HttpStatus.OK.value(),
+                        "Usuario eliminado exitosamente",
+                        null
+                )
+        );
     }
 
     // endpoint para autenticar un usuario
