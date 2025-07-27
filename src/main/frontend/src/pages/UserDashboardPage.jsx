@@ -66,15 +66,13 @@ export function UserDashboardPage() {
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(
-    (user) => {
-      if (!user || !user.username || !user.email) return false;
-      return (
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-  );
+  const filteredUsers = users.filter((user) => {
+    if (!user || !user.username || !user.email) return false;
+    return (
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const handleMenuClick = (user, event) => {
     setAnchorEl(event.currentTarget);
@@ -98,23 +96,11 @@ export function UserDashboardPage() {
 
   const handleCreateUser = async (userData) => {
     try {
-      const response = await userService.createUser(userData);
-
-      // asegurarnos de que response.data tenga la estructura correcta
-      const newUser = {
-        id: response.data.id,
-        username: response.data.username,
-        email: response.data.email,
-        role: userData.role, // o response.data.role si viene del backend
-        status: userData.active ? "active" : "inactive",
-        permission: "Viewer", // valor por defecto o el que venga del backend
-        profile_picture_link: userData.profile_picture_link,
-      };
-
-      // actualizar el estado de usuarios
-      setUsers((prevUsers) => [...prevUsers, newUser]);
-
-      return newUser;
+      await userService.createUser(userData);
+      // Recargar la lista de usuarios después de crear uno nuevo
+      const updatedUsers = await userService.getAllUsers();
+      setUsers(updatedUsers.data);
+      // Opcional: puedes retornar el último usuario si lo necesitas
     } catch (error) {
       console.error("Error al crear usuario:", error);
       throw error;
@@ -243,7 +229,11 @@ export function UserDashboardPage() {
                   <Box className="user-cell">
                     <Avatar
                       sx={{ width: 40, height: 40 }}
-                      src={user.profilePictureLink ? user.profilePictureLink : undefined}
+                      src={
+                        user.profilePictureLink
+                          ? user.profilePictureLink
+                          : undefined
+                      }
                     >
                       {!user.profilePictureLink && user.username.charAt(0)}
                     </Avatar>
@@ -261,8 +251,8 @@ export function UserDashboardPage() {
                 <TableCell>{user.role}</TableCell>
                 <TableCell>
                   <Chip
-                    label={user.status === "active" ? "Activo" : "Inactivo"}
-                    color={user.status === "active" ? "success" : "error"}
+                    label={user.isActive ? "Activo" : "Inactivo"}
+                    color={user.isActive ? "success" : "error"}
                     size="small"
                     sx={{ fontWeight: 500 }}
                   />

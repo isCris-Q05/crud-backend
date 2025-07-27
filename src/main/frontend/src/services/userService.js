@@ -40,7 +40,7 @@ const createUser = async (userData) => {
           password: userData.password,
           email: userData.email,
           profilePictureLink: userData.profile_picture_link || null,
-          isActive: userData.isActive || true,
+          isActive: userData.isActive ?? true,
         }, {
           headers: {
             'Content-Type': 'application/json'
