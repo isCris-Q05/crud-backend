@@ -72,6 +72,11 @@ public class UserService {
     public User createUser(User user) {
         // ira dentro de un try catch, para manejar excepciones
         try {
+            // comprobamos los datos del usuario que se pasan
+            System.out.println("Username: " + user.getUsername());
+            System.out.println("Email: " + user.getEmail());
+            System.out.println("Profile: " + user.getProfilePictureLink());
+
             // verificamos si el usuario ya existe
             if (userRepository.findByUsername(user.getUsername()) != null) {
                 throw new ResponseStatusException(

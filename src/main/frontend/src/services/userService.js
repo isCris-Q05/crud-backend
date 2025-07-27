@@ -34,11 +34,12 @@ const getUserById = async (id) => {
 
 const createUser = async (userData) => {
     try {
+        console.log(`Imagen: ${userData.profile_picture_link}`);
         const response = await axios.post(`${API_URL}/register`, {
           username: userData.username,
           password: userData.password,
           email: userData.email,
-          profile_picute_link: userData.profile_picute_link || null,
+          profilePictureLink: userData.profile_picture_link || null,
           isActive: userData.isActive || true,
         }, {
           headers: {

@@ -52,10 +52,9 @@ export function UserModal({ open, onClose, mode, userData, onCreateSuccess }) {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        profile_picture_link: formData.profile_picture_link,
+        profile_picture_link: formData.profile_picture_link, // Transformación a camelCase
         role: formData.role,
         active: formData.active,
-
       };
 
       const createdUser = await onCreateSuccess(newUser);

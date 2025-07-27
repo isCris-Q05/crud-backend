@@ -1,5 +1,6 @@
 package com.backendtest.crud.Entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -30,6 +31,8 @@ public class User {
     private String createdBy;
     private String updatedBy;
 
+    @Column(name = "profile_picture_link", length = 255)
+    @JsonProperty("profilePictureLink")
     private String profilePictureLink;
 
     //  estos metodos se ejecutan antes de insertar o actualizar un usuario

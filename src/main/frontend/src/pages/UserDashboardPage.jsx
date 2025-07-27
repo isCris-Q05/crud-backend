@@ -241,8 +241,11 @@ export function UserDashboardPage() {
               <TableRow key={user.id}>
                 <TableCell>
                   <Box className="user-cell">
-                    <Avatar sx={{ width: 40, height: 40 }}>
-                      {user.username.charAt(0)}
+                    <Avatar
+                      sx={{ width: 40, height: 40 }}
+                      src={user.profilePictureLink ? user.profilePictureLink : undefined}
+                    >
+                      {!user.profilePictureLink && user.username.charAt(0)}
                     </Avatar>
                     <Box>
                       <Typography fontWeight="medium">
