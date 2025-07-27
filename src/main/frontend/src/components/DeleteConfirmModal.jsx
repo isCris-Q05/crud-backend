@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { AlertTriangle } from "lucide-react";
 
-export function DeleteConfirmMdal({isOpen, onClose, onConfirm, userName}) {
+export function DeleteConfirmModal({isOpen, onClose, onConfirm, userName}) {
     return (
         <Dialog open={isOpen} onClose={onClose}>
             <DialogTitle clasName="flex items-center gap-2">
