@@ -1,28 +1,14 @@
-import './App.css'
-import { useFetch } from './useFetch';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LoginPage } from './pages/LoginPage';
+import { UserDashboardPage } from './pages/UserDashboardPage';
 
-function App() {
-  
-  // desestructuramos el hook useFetch
-  const { data, loading, error } = useFetch('https://jsonplaceholder.typicode.com/users');
-
+export function App() {
   return (
-    <>
-      <div>
-        <h1>Fetch API</h1>
-        <div className="card">
-          <ul>
-            {error && <p>Error: {error}</p>}
-            {loading && <p>Loading...</p>}
-            {data?.map(user => (
-              <li key={user.id}>{user.name}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/dashboard" element={<UserDashboardPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
