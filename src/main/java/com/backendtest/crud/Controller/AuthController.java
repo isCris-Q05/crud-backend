@@ -42,6 +42,9 @@ public class AuthController {
     // endpoint login
     @PostMapping("/login")
     public String login(@RequestBody User loginRequest) {
+        System.out.println("Login request: " + loginRequest.getUsername());
+        System.out.println("Login request password: " + loginRequest.getPassword());
+
         // primero vams a autenticar al usuario
         // aqui lo que hacemos es con el objeto de autenticacion
         // esto es de Spring Security
@@ -109,5 +112,11 @@ public class AuthController {
             return bearToken.substring(7);
         }
         return null;
+    }
+
+    // endpoint para manejar OPTIONS (necesario para CORS)
+    @RequestMapping(value = "/**", method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> handleOptions() {
+        return ResponseEntity.ok().build();
     }
 }

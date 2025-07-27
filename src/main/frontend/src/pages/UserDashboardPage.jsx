@@ -34,6 +34,7 @@ import { UserModal } from "../components/UserModal";
 import { UserDetailsModal } from "../components/UserDetailsModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import "../styles/UserDashboardPage.css";
+import { EditUserModal } from "../components/EditUserModal";
 
 export function UserDashboardPage() {
   const [users, setUsers] = useState([]);
@@ -274,11 +275,23 @@ export function UserDashboardPage() {
 
       {/* Modales */}
       <UserModal
-        open={openModal === "create" || openModal === "edit"}
+        open={openModal === "create"}
         onClose={() => setOpenModal(null)}
         mode={openModal}
         userData={selectedUser}
       />
+
+      <EditUserModal
+        open={openModal === "edit"}
+        user={selectedUser}
+        onClose={() => setOpenModal(null)}
+        onSave={(data) => {
+          setUsers((prev) =>
+            prev.map((u) => (u.id === selectedUser.id ? { ...u, ...data } : u))
+          );
+          setOpenModal(null);
+        }}
+        />
 
       <UserDetailsModal
         open={openModal === "details"}

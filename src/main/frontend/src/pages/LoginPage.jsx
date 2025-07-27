@@ -14,20 +14,29 @@ import {
 } from '@mui/material';
 import { Lock, Person } from '@mui/icons-material';
 import '../styles/LoginPage.css';
+import authService from '../services/authService';
 
 export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username !== 'admin' || password !== 'admin123') {
-      setError('Credenciales incorrectas. Usa admin/admin123');
-      return;
+    setLoading(true);
+    setError('');
+
+    try {
+      await authService.login(username, password);
+      navigate('/dashboard');
+    } catch (error) {
+      setError('Credenciales incorrectas. Por favor intente nuevamente.');
+    } finally {
+      setLoading(false);
     }
-    navigate('/dashboard');
   };
 
   return (
@@ -99,7 +108,7 @@ export function LoginPage() {
                 fontWeight: 'bold'
               }}
             >
-              INICIAR SESIÓN
+              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
 
