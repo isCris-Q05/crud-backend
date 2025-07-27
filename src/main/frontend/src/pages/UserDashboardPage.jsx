@@ -28,7 +28,7 @@ import {
   Visibility,
   Edit,
   Delete,
-  People
+  People,
 } from "@mui/icons-material";
 import { UserModal } from "../components/UserModal";
 import { UserDetailsModal } from "../components/UserDetailsModal";
@@ -55,7 +55,7 @@ export function UserDashboardPage() {
         setLoading(true);
         const response = await userService.getAllUsers();
         setUsers(response.data);
-        setError(null)
+        setError(null);
       } catch (error) {
         setError("Error al cargar los usuarios. Por favor, intente más tarde.");
         console.error("Error al cargar los usuarios:", error);
@@ -67,9 +67,13 @@ export function UserDashboardPage() {
   }, []);
 
   const filteredUsers = users.filter(
-    (user) =>
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user) => {
+      if (!user || !user.username || !user.email) return false;
+      return (
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
   );
 
   const handleMenuClick = (user, event) => {
@@ -88,7 +92,32 @@ export function UserDashboardPage() {
     } catch (error) {
       console.error("Error al cerrar sesion: ", error);
       // forzamos navegacion si hay error
-      navigate("/")
+      navigate("/");
+    }
+  };
+
+  const handleCreateUser = async (userData) => {
+    try {
+      const response = await userService.createUser(userData);
+
+      // asegurarnos de que response.data tenga la estructura correcta
+      const newUser = {
+        id: response.data.id,
+        username: response.data.username,
+        email: response.data.email,
+        role: userData.role, // o response.data.role si viene del backend
+        status: userData.active ? "active" : "inactive",
+        permission: "Viewer", // valor por defecto o el que venga del backend
+        profile_picture_link: userData.profile_picture_link,
+      };
+
+      // actualizar el estado de usuarios
+      setUsers((prevUsers) => [...prevUsers, newUser]);
+
+      return newUser;
+    } catch (error) {
+      console.error("Error al crear usuario:", error);
+      throw error;
     }
   };
 
@@ -96,23 +125,29 @@ export function UserDashboardPage() {
     <Box className="dashboard-page">
       {/* Header */}
       <Box className="dashboard-header">
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
           {/* Icono de usuarios más grande */}
-          <People sx={{ 
-            fontSize: '40px',  // Tamaño aumentado
-            color: 'primary.main',
-            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-            borderRadius: '50%',
-            padding: '8px',    // Padding aumentado para compensar el tamaño
-            alignSelf: 'center' // Alineación vertical
-          }} />
-          
+          <People
+            sx={{
+              fontSize: "40px", // Tamaño aumentado
+              color: "primary.main",
+              backgroundColor: "rgba(25, 118, 210, 0.1)",
+              borderRadius: "50%",
+              padding: "8px", // Padding aumentado para compensar el tamaño
+              alignSelf: "center", // Alineación vertical
+            }}
+          />
+
           {/* Títulos en columna */}
           <Box>
             <Typography variant="h4" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
               Sistema de Usuarios
             </Typography>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              sx={{ lineHeight: 1.2 }}
+            >
               Gestión completa de usuarios
             </Typography>
           </Box>
@@ -120,12 +155,14 @@ export function UserDashboardPage() {
 
         {/* Sección derecha con avatar y botón */}
         <Box className="user-actions">
-          <Avatar sx={{ 
-            bgcolor: "primary.main", 
-            width: 44, 
-            height: 44,
-            fontSize: '1.25rem'
-          }}>
+          <Avatar
+            sx={{
+              bgcolor: "primary.main",
+              width: 44,
+              height: 44,
+              fontSize: "1.25rem",
+            }}
+          >
             {users[0]?.username?.charAt(0) || "A"}
           </Avatar>
           <Button
@@ -277,6 +314,7 @@ export function UserDashboardPage() {
         onClose={() => setOpenModal(null)}
         mode={openModal}
         userData={selectedUser}
+        onCreateSuccess={handleCreateUser}
       />
 
       <EditUserModal
@@ -289,7 +327,7 @@ export function UserDashboardPage() {
           );
           setOpenModal(null);
         }}
-        />
+      />
 
       <UserDetailsModal
         open={openModal === "details"}

@@ -34,7 +34,17 @@ const getUserById = async (id) => {
 
 const createUser = async (userData) => {
     try {
-        const response = await axios.post(`${API_URL}/register`, userData);
+        const response = await axios.post(`${API_URL}/register`, {
+          username: userData.username,
+          password: userData.password,
+          email: userData.email,
+          profile_picute_link: userData.profile_picute_link || null,
+          isActive: userData.isActive || true,
+        }, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
         console.log("Usuario creado");
         return response.data
     } catch (error) {
