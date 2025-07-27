@@ -35,6 +35,8 @@ import { UserDetailsModal } from "../components/UserDetailsModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import "../styles/UserDashboardPage.css";
 import { EditUserModal } from "../components/EditUserModal";
+import authService from "../services/authService";
+import userService from "../services/userService";
 
 export function UserDashboardPage() {
   const [users, setUsers] = useState([]);
@@ -43,36 +45,25 @@ export function UserDashboardPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openModal, setOpenModal] = useState(null);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Datos de ejemplo
   useEffect(() => {
-    const mockUsers = [
-      {
-        id: 1,
-        username: "admin",
-        email: "admin@example.com",
-        role: "Administrator",
-        status: "active",
-        permission: "Owner",
-      },
-      {
-        id: 2,
-        username: "john_doe",
-        email: "john.doe@example.com",
-        role: "Team member",
-        status: "active",
-        permission: "Editor",
-      },
-      {
-        id: 3,
-        username: "jane_smith",
-        email: "jane.smith@example.com",
-        role: "Contributor",
-        status: "inactive",
-        permission: "Viewer",
-      },
-    ];
-    setUsers(mockUsers);
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await userService.getAllUsers();
+        setUsers(response.data);
+        setError(null)
+      } catch (error) {
+        setError("Error al cargar los usuarios. Por favor, intente más tarde.");
+        console.error("Error al cargar los usuarios:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const filteredUsers = users.filter(
@@ -90,8 +81,15 @@ export function UserDashboardPage() {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Error al cerrar sesion: ", error);
+      // forzamos navegacion si hay error
+      navigate("/")
+    }
   };
 
   return (
