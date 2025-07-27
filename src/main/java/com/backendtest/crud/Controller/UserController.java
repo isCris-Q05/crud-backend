@@ -46,8 +46,5 @@ public class UserController {
     }
 
     // endpoint para autenticar un usuario
-    @PostMapping("/authenticate")
-    public boolean authenticateUser(@RequestParam String username, @RequestParam String password) {
-        return userService.aunthenticateUser(username, password);
-    }
+
 }

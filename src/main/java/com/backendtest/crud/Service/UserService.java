@@ -56,15 +56,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    // metodo para autenticar un usuario
-    public boolean aunthenticateUser(String username, String password) {
-        // buscamos el usuario por el username
-        User user = userRepository.findByUsername(username);
-        // si no se encuentra el usuario, retornamos false
-        if (user == null) {
-            return false;
-        }
-        // comparamos el password hasheado con el password que se ingreso
-        return passwordEncoder.matches(password, user.getPassword());
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }
