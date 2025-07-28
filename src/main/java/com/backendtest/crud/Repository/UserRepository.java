@@ -9,11 +9,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-// aca lo que hacemos es extender de JpaRepository
-// tomamos User como entidad y Long como tipo de dato del id
-// esto nos dara a los metodos CRUD basicos
-public interface  UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
     User findByUsername(String username);
-    // Buscamos un usuario por su email
     User findByEmail(String email);
+
+    // Métodos para username
+    boolean existsByUsernameIgnoreCase(String username);
+    User findByUsernameIgnoreCase(String username);
+
+    // Nuevos métodos para email
+    boolean existsByEmailIgnoreCase(String email);
+    User findByEmailIgnoreCase(String email);
 }

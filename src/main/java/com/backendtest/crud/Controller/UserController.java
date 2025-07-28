@@ -67,24 +67,52 @@ public class UserController {
         );
     }
 
-    // endpoint para actualizar un usuario
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<User>> updateUser(
             @PathVariable Long id,
             @RequestBody User userDetails,
-            @RequestHeader("Authorization") String token // O usa Spring Security para obtener el username
-    ) {
-        // Extraer el username del token (ejemplo simplificado)
-        String currentUsername = extractUsernameFromToken(token);
+            @RequestHeader("Authorization") String token) {
 
-        User updatedUser = userService.updateUser(id, userDetails, currentUsername);
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        HttpStatus.OK.value(),
-                        "Usuario actualizado exitosamente",
-                        updatedUser
-                )
-        );
+        try {
+            String currentUsername = extractUsernameFromToken(token);
+            User updatedUser = userService.updateUser(id, userDetails, currentUsername);
+
+            // Verificar si el username cambió
+            if (!updatedUser.getUsername().equals(currentUsername)) {
+                String oldToken = token.substring(7);
+                String newToken = jwtTokenProvider.generateToken(updatedUser.getUsername());
+
+                // Permitir que ambos tokens funcionen temporalmente
+                jwtTokenProvider.allowBothTokens(oldToken, newToken);
+
+                // Devolver respuesta con ambos tokens
+                return ResponseEntity.ok()
+                        .header("New-Token", newToken)
+                        .header("Old-Token", oldToken) // Para que el frontend sepa cuál reemplazar
+                        .header("Access-Control-Expose-Headers", "New-Token, Old-Token")
+                        .body(new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Usuario actualizado. Se ha generado un nuevo token.",
+                                updatedUser
+                        ));
+            }
+
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            HttpStatus.OK.value(),
+                            "Usuario actualizado exitosamente",
+                            updatedUser
+                    )
+            );
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(
+                    new ApiResponse<>(
+                            e.getStatusCode().value(),
+                            e.getReason(),
+                            null
+                    )
+            );
+        }
     }
 
     @Autowired

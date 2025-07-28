@@ -155,20 +155,6 @@ export function UserModal({ open, onClose, mode, userData, onCreateSuccess }) {
             />
           )}
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Rol</InputLabel>
-            <Select
-              value={formData.role}
-              label="Rol"
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
-            >
-              <MenuItem value="admin">Administrador</MenuItem>
-              <MenuItem value="user">Usuario</MenuItem>
-            </Select>
-          </FormControl>
-
           <FormControlLabel
             control={
               <Switch

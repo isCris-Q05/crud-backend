@@ -50,27 +50,64 @@ const createUser = async (userData) => {
         console.log("Usuario creado");
         return response.data
     } catch (error) {
+        let errorMessage = error.response.data.error;
+
+        console.log('Error completo:', errorMessage);
+
         console.error('Error al crear usuario:', error.response?.data || error.message);
-        throw error;
+        throw new Error(errorMessage);
     }
 }
 
-const updateUser = async(id, userData) => {
+const updateUser = async (id, userData) => {
     try {
-        console.log(`Estado: ${userData.isActive}`);
+        const oldToken = localStorage.getItem('token');
+        const oldUsername = localStorage.getItem('user');
+        
         const response = await axios.put(`${API_URL}/${id}`, {
-          username: userData.username,
-          email: userData.email,
-          profilePictureLink: userData.profilePictureLink || null,
-          isActive: userData.isActive === false ? false : true, // por defecto es true
+            username: userData.username,
+            email: userData.email,
+            profilePictureLink: userData.profilePictureLink || null,
+            isActive: userData.isActive === false ? false : true,
+        }, {
+            headers: {
+                'Authorization': `Bearer ${oldToken}`
+            }
         });
-        // Usuario actualizado
+
+        // Manejar la actualización del token
+        const newToken = response.headers['new-token'];
+        const oldTokenFromHeader = response.headers['old-token'];
+        
+        if (newToken && oldTokenFromHeader) {
+            // Verificar que coincida con nuestro token actual
+            if (oldTokenFromHeader === oldToken) {
+                localStorage.setItem('token', newToken);
+                localStorage.setItem('user', userData.username);
+                
+                // Actualizar axios para peticiones futuras
+                axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+                
+                // Forzar actualización de componentes que podrían estar usando el token antiguo
+                window.dispatchEvent(new Event('token-updated'));
+            }
+        }
+
         return response.data;
     } catch (error) {
-        console.error('Error al crear usuario:', error.response?.data || error.message);
+        console.error('Error al actualizar usuario:', error);
+        
+        if (error.response?.status === 401) {
+            // Limpiar y recargar si hay error de autenticación
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return;
+        }
+        
         throw error;
     }
-}
+};
 
 const deleteUser = async (id) => {
   try {

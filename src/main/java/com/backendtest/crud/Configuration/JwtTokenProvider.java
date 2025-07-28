@@ -3,6 +3,7 @@ package com.backendtest.crud.Configuration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import java.util.concurrent.ConcurrentHashMap;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,13 +31,32 @@ public class JwtTokenProvider {
 
     // genera un token JWT
     public String generateToken(String username) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    public boolean isTokenAboutToExpire(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            // Considerar que el token está por expirar si le quedan menos de 5 minutos
+            return claims.getExpiration().getTime() - System.currentTimeMillis() < 300000;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 
     // obtiene el username del token JWT
     public String getUsernameFromToken(String token) {
@@ -78,23 +98,36 @@ public class JwtTokenProvider {
             throw new RuntimeException("{\"error\": \"Error invalidando token: " + e.getMessage() + "\"}");        }
     }
 
+    private final Map<String, String> tokenReplacements = new ConcurrentHashMap<>();
+
+    public void allowBothTokens(String oldToken, String newToken) {
+        // Permitir que el antiguo token funcione por 10 segundos más
+        tokenReplacements.put(oldToken, newToken);
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                tokenReplacements.remove(oldToken);
+                invalidateToken(oldToken);
+            }
+        }, 10000); // 10 segundos
+    }
+
     public boolean validateToken(String token) {
         try {
-            System.out.println("Validando token ...: " + token);
-            System.out.println("Tokens invalidados actuales: " + invalidatedTokens);
+            // Si es un token que está siendo reemplazado
+            if (tokenReplacements.containsKey(token)) {
+                return true;
+            }
 
-            // Verificar primero si el token está invalidado
+            // Verificar si está invalidado
             if (invalidatedTokens.contains(token)) {
-                System.out.println("Token encontrado como invalido: " + token);
                 return false;
             }
 
-            // Luego verificar validez JWT (firma y expiración)
+            // Validación normal
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            System.out.println("Token valido: " + token);
             return true;
         } catch (Exception e) {
-            System.out.println("Error validando: " + e.getMessage());
             return false;
         }
     }

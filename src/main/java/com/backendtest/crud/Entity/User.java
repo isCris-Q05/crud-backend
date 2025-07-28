@@ -8,7 +8,10 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "email")
+})
 public class User {
     // campos del modelo/entidad
     @Id
@@ -18,6 +21,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)

@@ -123,41 +123,55 @@ public class UserService {
                     )
             );
 
-            // 1. validacion y actualizacion del username
-            // solo si es diferente y no existe
+            // Validación del username
             if (userDetails.getUsername() != null &&
-            !userDetails.getUsername().equals(user.getUsername())) {
-                User existingUser = userRepository.findByUsername(userDetails.getUsername());
-                // si el username ya existe, lanzamos una excepcion
-                if (existingUser != null) {
-                    throw new ResponseStatusException(
-                            HttpStatus.CONFLICT,
-                            "El nombre de usuario ya existe"
-                    );
+                    !userDetails.getUsername().equalsIgnoreCase(user.getUsername())) {
+
+                boolean usernameExists = userRepository.existsByUsernameIgnoreCase(userDetails.getUsername());
+                if (usernameExists) {
+                    User existingUser = userRepository.findByUsernameIgnoreCase(userDetails.getUsername());
+                    if (!existingUser.getId().equals(user.getId())) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "El nombre de usuario ya está en uso por otro usuario"
+                        );
+                    }
                 }
-                // actualizamos el username
                 user.setUsername(userDetails.getUsername());
             }
-            // 2. actualizacion de los otros campos
-            if (userDetails.getEmail() != null) {
+
+            // Validación del email (nueva verificación)
+            if (userDetails.getEmail() != null &&
+                    !userDetails.getEmail().equalsIgnoreCase(user.getEmail())) {
+
+                boolean emailExists = userRepository.existsByEmailIgnoreCase(userDetails.getEmail());
+                if (emailExists) {
+                    User existingUser = userRepository.findByEmailIgnoreCase(userDetails.getEmail());
+                    if (!existingUser.getId().equals(user.getId())) {
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "El email ya está en uso por otro usuario"
+                        );
+                    }
+                }
                 user.setEmail(userDetails.getEmail());
             }
 
+            // Resto de las actualizaciones
             if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
                 user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
             }
+
             if (userDetails.getProfilePictureLink() != null) {
                 user.setProfilePictureLink(userDetails.getProfilePictureLink());
             }
 
-            // tambien de estado isActive
             if (userDetails.getIsActive() != null) {
                 user.setIsActive(userDetails.getIsActive());
             }
 
-            // Setear updated_by con el username del usuario que realiza la actualización
             user.setUpdatedBy(currentUsername);
-            return userRepository.save(user); // @PreUpdate actualizará automáticamente updated_at
+            return userRepository.save(user);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
@@ -167,7 +181,6 @@ public class UserService {
             );
         }
     }
-
     //  metodo para eliminar un usuario
     public void deleteUser(Long id) {
         // ira dentro de un try catch, para manejar excepciones
