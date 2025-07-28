@@ -76,7 +76,7 @@ export function LoginPage() {
               required
               sx={{ mb: 2 }}
             />
-            
+            {/* sx es para estilos, mr es margin right */}
             <TextField
               fullWidth
               label="Contraseña"
@@ -108,6 +108,8 @@ export function LoginPage() {
                 fontWeight: 'bold'
               }}
             >
+            {/* aqui lo que hacemos es con el objeto de autenticacion
+            es como un tipo de spinner*/}
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
@@ -117,10 +119,10 @@ export function LoginPage() {
               Credenciales de prueba:
             </Typography>
             <Typography variant="body2" align="center">
-              <strong>Usuario:</strong> admin
+              <strong>Usuario:</strong> cris2725
             </Typography>
             <Typography variant="body2" align="center">
-              <strong>Contraseña:</strong> admin123
+              <strong>Contraseña:</strong> 1234
             </Typography>
           </Box>
         </CardContent>

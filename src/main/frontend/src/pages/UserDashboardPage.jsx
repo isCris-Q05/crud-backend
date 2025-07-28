@@ -71,21 +71,31 @@ export function UserDashboardPage() {
         const response = await userService.getAllUsers();
         const total = response.data.length;
 
-        // Asegurarnos de que la página actual sea válida
+        // Asegurarnos de que la pagina actual sea valida
+        // esta operacion lo que da es el total de usuarios
         const totalPages = Math.ceil(total / rowsPerPage);
+        // si la pagina actual es mayor que el total de paginas
+        // se le asigna el total de paginas
         const currentPage =
           page > totalPages && totalPages > 0 ? totalPages : page;
-
+        
+        // si la pagina actual es diferente a la pagina actual
+        // se le asigna la pagina actual
         if (currentPage !== page) {
           setPage(currentPage);
         }
 
+        // paginatedUsers es basicamente el array de usuarios
+        // este es igual al array de usuarios, slice es una funcion que
+        // recibe un inicio y un final
         const paginatedUsers = response.data.slice(
           (currentPage - 1) * rowsPerPage,
           currentPage * rowsPerPage
         );
 
+        // setUsers es una funcion que se encarga de actualizar el estado
         setUsers(paginatedUsers);
+        // setTotalUsers es una funcion que se encarga de actualizar el estado
         setTotalUsers(total);
         setError(null);
       } catch (error) {
@@ -99,6 +109,8 @@ export function UserDashboardPage() {
     fetchUsers();
   }, [page, rowsPerPage]);
 
+  // esto es basicamente un filtro
+
   const filteredUsers = users.filter((user) => {
     if (!user || !user.username || !user.email) return false;
     return (
@@ -111,6 +123,9 @@ export function UserDashboardPage() {
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
+
+  // esto es para manejar el menu
+  // setAnchorEl es una funcion que se encarga de actualizar el estado
 
   const handleMenuClick = (user, event) => {
     setAnchorEl(event.currentTarget);
@@ -149,7 +164,7 @@ export function UserDashboardPage() {
   const handleCreateUser = async (userData) => {
     try {
       await userService.createUser(userData);
-      // Recargar la lista de usuarios paginada después de crear uno nuevo
+      // Recargar la lista de usuarios paginada despues de crear uno nuevo
       const response = await userService.getAllUsers();
       const paginatedUsers = response.data.slice(
         (page - 1) * rowsPerPage,
@@ -178,19 +193,19 @@ export function UserDashboardPage() {
       {/* Header */}
       <Box className="dashboard-header">
         <Box sx={{ display: "flex", gap: 2 }}>
-          {/* Icono de usuarios más grande */}
+          {/* Icono de usuarios mas grande */}
           <People
             sx={{
               fontSize: "40px", // Tamaño aumentado
               color: "primary.main",
               backgroundColor: "rgba(25, 118, 210, 0.1)",
               borderRadius: "50%",
-              padding: "8px", // Padding aumentado para compensar el tamaño
-              alignSelf: "center", // Alineación vertical
+              padding: "8px", // padding aumentado para compensar el tamaño
+              alignSelf: "center", // alineacion vertical
             }}
           />
 
-          {/* Títulos en columna */}
+          {/* titulos en columna */}
           <Box>
             <Typography variant="h4" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
               Sistema de Usuarios
@@ -205,7 +220,7 @@ export function UserDashboardPage() {
           </Box>
         </Box>
 
-        {/* Sección derecha con avatar y botón */}
+        {/* seccion derecha con avatar y boton */}
         <Box className="user-actions">
           <UserAvatar />
           <Button
@@ -222,7 +237,7 @@ export function UserDashboardPage() {
 
       {/* Espacio en blanco */}
 
-      {/* Sección de información y controles */}
+      {/* seccion de informacion y controles */}
       <Box
         sx={{
           display: "flex",

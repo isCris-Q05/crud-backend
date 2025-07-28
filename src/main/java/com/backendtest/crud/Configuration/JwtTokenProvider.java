@@ -101,7 +101,7 @@ public class JwtTokenProvider {
     private final Map<String, String> tokenReplacements = new ConcurrentHashMap<>();
 
     public void allowBothTokens(String oldToken, String newToken) {
-        // Permitir que el antiguo token funcione por 10 segundos más
+        // permitir que el antiguo token funcione por 10 segundos mas
         tokenReplacements.put(oldToken, newToken);
         new Timer().schedule(new TimerTask() {
             @Override
@@ -114,17 +114,17 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            // Si es un token que está siendo reemplazado
+            // Si es un token que esta siendo reemplazado
             if (tokenReplacements.containsKey(token)) {
                 return true;
             }
 
-            // Verificar si está invalidado
+            // verificar si esta invalidado
             if (invalidatedTokens.contains(token)) {
                 return false;
             }
 
-            // Validación normal
+            // validacion normal
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {

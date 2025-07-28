@@ -92,7 +92,8 @@ const updateUser = async (id, userData) => {
 
         return response.data;
     } catch (error) {
-        console.error('Error al actualizar usuario:', error);
+      let erroMessage =  error.response.data.message;
+        console.error('Error al actualizar usuario:', erroMessage);
         
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
@@ -101,7 +102,7 @@ const updateUser = async (id, userData) => {
             return;
         }
         
-        throw error;
+        throw new Error(erroMessage);
     }
 };
 

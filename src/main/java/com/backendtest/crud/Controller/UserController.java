@@ -79,12 +79,12 @@ public class UserController {
                     () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado")
             );
 
-            // Verificar si el usuario que se está editando es el mismo que tiene la sesión
+            // Verificar si el usuario que se esta editando es el mismo que tiene la sesion
             boolean isCurrentUser = userToUpdate.getUsername().equals(currentUsername);
 
             User updatedUser = userService.updateUser(id, userDetails, currentUsername);
 
-            // Solo generar nuevo token si es el usuario actual y cambió el username
+            // Solo se genera nuevo token si es el usuario actual y cambio el username
             if (isCurrentUser && !updatedUser.getUsername().equals(currentUsername)) {
                 String oldToken = token.substring(7);
                 String newToken = jwtTokenProvider.generateToken(updatedUser.getUsername());
