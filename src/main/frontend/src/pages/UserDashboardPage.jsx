@@ -216,9 +216,11 @@ export function UserDashboardPage() {
             <TableRow>
               <TableCell>USUARIO</TableCell>
               <TableCell>EMAIL</TableCell>
-              <TableCell>ROL</TableCell>
               <TableCell>ESTADO</TableCell>
-              <TableCell>PERMISOS</TableCell>
+              <TableCell>CREADO EN</TableCell>
+              <TableCell>ACTUALIZADO EN</TableCell>
+              <TableCell>CREADO POR</TableCell>
+              <TableCell>ACTUALIZADO POR</TableCell>
               <TableCell>ACCIONES</TableCell>
             </TableRow>
           </TableHead>
@@ -229,11 +231,7 @@ export function UserDashboardPage() {
                   <Box className="user-cell">
                     <Avatar
                       sx={{ width: 40, height: 40 }}
-                      src={
-                        user.profilePictureLink
-                          ? user.profilePictureLink
-                          : undefined
-                      }
+                      src={user.profilePictureLink ? user.profilePictureLink : undefined}
                     >
                       {!user.profilePictureLink && user.username.charAt(0)}
                     </Avatar>
@@ -248,7 +246,6 @@ export function UserDashboardPage() {
                   </Box>
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.role}</TableCell>
                 <TableCell>
                   <Chip
                     label={user.isActive ? "Activo" : "Inactivo"}
@@ -257,7 +254,14 @@ export function UserDashboardPage() {
                     sx={{ fontWeight: 500 }}
                   />
                 </TableCell>
-                <TableCell>{user.permission}</TableCell>
+                <TableCell>
+                  {user.createdAt ? new Date(user.createdAt).toLocaleString() : ""}
+                </TableCell>
+                <TableCell>
+                  {user.updatedAt ? new Date(user.updatedAt).toLocaleString() : ""}
+                </TableCell>
+                <TableCell>{user.createdBy || "-"}</TableCell>
+                <TableCell>{user.updatedBy || "-"}</TableCell>
                 <TableCell>
                   <IconButton onClick={(e) => handleMenuClick(user, e)}>
                     <MoreVert />
@@ -314,10 +318,10 @@ export function UserDashboardPage() {
         open={openModal === "edit"}
         user={selectedUser}
         onClose={() => setOpenModal(null)}
-        onSave={(data) => {
-          setUsers((prev) =>
-            prev.map((u) => (u.id === selectedUser.id ? { ...u, ...data } : u))
-          );
+        onSave={async () => {
+          // Recargamos la lista de usuarios despues que editamos
+          const updatedUsers = await userService.getAllUsers();
+          setUsers(updatedUsers.data);
           setOpenModal(null);
         }}
       />

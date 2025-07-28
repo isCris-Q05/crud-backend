@@ -14,18 +14,19 @@ import {
   Avatar,
   IconButton,
   Box,
-  Typography
+  Typography,
 } from "@mui/material";
 import { Close, CloudUpload } from "@mui/icons-material";
 import { useState, useEffect } from "react"; // Añadimos useEffect
+import userService from "../services/userService"; // Agrega la importación
 
 export function EditUserModal({ open, user, onClose, onSave }) {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    role: "Team member",
     status: "active",
-    permission: "Viewer"
+    profilePictureLink: "",
+
   });
 
   // Efecto para actualizar el estado cuando cambia el usuario
@@ -34,35 +35,59 @@ export function EditUserModal({ open, user, onClose, onSave }) {
       setFormData({
         username: user.username || "",
         email: user.email || "",
-        role: user.role || "Team member",
         status: user.status || "active",
-        permission: user.permission || "Viewer"
+        profilePictureLink: user.profilePictureLink || "",
       });
     }
   }, [user]); // Se ejecuta cuando cambia el usuario
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.username || !formData.email) {
       alert("Por favor complete todos los campos requeridos");
       return;
     }
-    onSave(formData);
-    onClose();
+    try {
+      // Llama al endpoint de edición
+      await userService.updateUser(user.id, {
+        username: formData.username,
+        email: formData.email,
+        profilePictureLink: formData.profilePictureLink || "",
+        isActive: formData.status === "active",
+      });
+      onSave({
+        ...user,
+        username: formData.username,
+        email: formData.email,
+        profilePictureLink: formData.profilePictureLink || "",
+        isActive: formData.status === "active",
+      });
+      onClose();
+    } catch (error) {
+      alert("Error al editar usuario");
+      console.error(error);
+    }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Typography variant="h6" fontWeight="bold">
-          Editar Usuario: {formData.username} {/* Usamos formData en lugar de user directamente */}
+          Editar Usuario: {formData.username}{" "}
+          {/* Usamos formData en lugar de user directamente */}
         </Typography>
         <IconButton onClick={onClose}>
           <Close />
@@ -71,21 +96,22 @@ export function EditUserModal({ open, user, onClose, onSave }) {
 
       <DialogContent dividers sx={{ pt: 3 }}>
         {/* Foto de perfil */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
-          <Avatar 
-            sx={{ width: 80, height: 80, fontSize: '2rem' }}
-            src={user?.profile_picture_link}
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3, gap: 2 }}>
+          <Avatar
+            sx={{ width: 80, height: 80, fontSize: "2rem" }}
+            src={formData.profilePictureLink || ""}
           >
             {formData.username?.charAt(0)}
           </Avatar>
-          <Button
-            variant="outlined"
-            startIcon={<CloudUpload />}
-            component="label"
-          >
-            Cambiar foto
-            <input type="file" hidden accept="image/*" />
-          </Button>
+          <TextField
+            fullWidth
+            label="URL de la foto de perfil"
+            name="profilePictureLink"
+            value={formData.profilePictureLink || ""}
+            onChange={handleChange}
+            margin="normal"
+            sx={{ mb: 0 }}
+          />
         </Box>
 
         {/* Campos del formulario */}
@@ -112,7 +138,7 @@ export function EditUserModal({ open, user, onClose, onSave }) {
           sx={{ mb: 2 }}
         />
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <FormControl fullWidth>
             <InputLabel>Rol</InputLabel>
             <Select
@@ -146,16 +172,19 @@ export function EditUserModal({ open, user, onClose, onSave }) {
           control={
             <Switch
               name="status"
-              checked={formData.status === 'active'}
-              onChange={(e) => 
-                setFormData({...formData, status: e.target.checked ? 'active' : 'inactive'})
+              checked={formData.status === "active"}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  status: e.target.checked ? "active" : "inactive",
+                })
               }
               color="primary"
             />
           }
           label="Usuario activo"
           labelPlacement="start"
-          sx={{ justifyContent: 'space-between', mx: 0, mt: 1 }}
+          sx={{ justifyContent: "space-between", mx: 0, mt: 1 }}
         />
       </DialogContent>
 
@@ -163,9 +192,9 @@ export function EditUserModal({ open, user, onClose, onSave }) {
         <Button onClick={onClose} variant="outlined" sx={{ mr: 1 }}>
           Cancelar
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
           color="primary"
           sx={{ minWidth: 120 }}
         >

@@ -69,7 +69,7 @@ public class UserService {
     }
 
     // metodo para crear un usuario
-    public User createUser(User user) {
+    public User createUser(User user, String currentUsername) {
         // ira dentro de un try catch, para manejar excepciones
         try {
             // comprobamos los datos del usuario que se pasan
@@ -95,6 +95,8 @@ public class UserService {
             }
             // generamos un password hasheado
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            // Set createdBy with the username of the user creating this account
+            user.setCreatedBy(currentUsername);
             // guardamos el usuario en la base de datos
             return userRepository.save(user);
         } catch (ResponseStatusException e) {

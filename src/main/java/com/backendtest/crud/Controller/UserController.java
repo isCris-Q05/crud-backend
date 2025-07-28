@@ -53,8 +53,11 @@ public class UserController {
 
     // endpoint para crear un usuario
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
+    public ResponseEntity<ApiResponse<User>> createUser(
+            @RequestBody User user,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        String currentUsername = (token != null) ? extractUsernameFromToken(token) : "system";
+        User createdUser = userService.createUser(user, currentUsername);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse<>(
                         HttpStatus.CREATED.value(),

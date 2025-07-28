@@ -56,6 +56,7 @@ const createUser = async (userData) => {
 
 const updateUser = async(id, userData) => {
     try {
+        console.log(`Imagen: ${userData.profilePictureLink}`);
         const response = await axios.put(`${API_URL}/${id}`, userData);
         // Usuario actualizado
         return response.data;
