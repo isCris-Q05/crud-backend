@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
         @UniqueConstraint(columnNames = "username"),
         @UniqueConstraint(columnNames = "email")
 })
+
 public class User {
     // campos del modelo/entidad
     @Id

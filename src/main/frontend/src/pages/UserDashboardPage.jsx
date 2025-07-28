@@ -248,13 +248,7 @@ export function UserDashboardPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{ width: 250 }}
           />
-          <Button
-            variant="contained"
-            startIcon={<FilterList />}
-            sx={{ minWidth: 140 }}
-          >
-            Filtrar
-          </Button>
+          
           <Button
             variant="contained"
             startIcon={<Add />}

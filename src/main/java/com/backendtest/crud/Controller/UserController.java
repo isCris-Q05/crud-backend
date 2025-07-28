@@ -34,7 +34,6 @@ public class UserController {
                 )
         );
     }
-
     // endpoint para obtener un usuario por id
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {
