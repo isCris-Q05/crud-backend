@@ -28,7 +28,6 @@ export function EditUserModal({ open, user, onClose, onSave }) {
     email: user.email || "",
     status: user.isActive === false ? "inactive" : "active",
     profilePictureLink: user.profilePictureLink || "",
-
   });
 
   const [loading, setLoading] = useState(false);
@@ -56,29 +55,28 @@ export function EditUserModal({ open, user, onClose, onSave }) {
 
   const handleSubmit = async () => {
     if (!formData.username || !formData.email) {
-      alert("Por favor complete todos los campos requeridos");
+      setError("Por favor complete todos los campos requeridos");
       return;
     }
+
     try {
-      // Llama al endpoint de edición
+      setLoading(true);
+      setError(null);
+
       const updatedUser = {
         username: formData.username,
         email: formData.email,
         profilePictureLink: formData.profilePictureLink || "",
-        isActive: formData.status === "active" ? true : false
-      }
+        isActive: formData.status === "active" ? true : false,
+      };
+
       await userService.updateUser(user.id, updatedUser);
-      onSave({
-        ...user,
-        username: formData.username,
-        email: formData.email,
-        profilePictureLink: formData.profilePictureLink || "",
-        isActive: formData.status === "active" ? true : false
-      });
-      onClose();
+      onSave(); // Ahora onSave maneja la recarga de datos
     } catch (error) {
-      alert("Error al editar usuario");
+      setError(error.message || "Error al editar usuario");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -203,8 +201,9 @@ export function EditUserModal({ open, user, onClose, onSave }) {
           variant="contained"
           color="primary"
           sx={{ minWidth: 120 }}
+          disabled={loading}
         >
-          Guardar Cambios
+          {loading ? "Guardando..." : "Guardar Cambios"}
         </Button>
       </DialogActions>
     </Dialog>

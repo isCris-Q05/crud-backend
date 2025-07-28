@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {Snackbar} from "@mui/material";
+import { Snackbar } from "@mui/material";
 import Alert from "@mui/material/Alert";
 
 import {
@@ -21,6 +21,7 @@ import {
   Menu,
   MenuItem,
   Chip,
+  Pagination,
 } from "@mui/material";
 import {
   Search,
@@ -57,13 +58,35 @@ export function UserDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Datos de ejemplo
+  // Paginator
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const [totalUsers, setTotalUsers] = useState(0);
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
         const response = await userService.getAllUsers();
-        setUsers(response.data);
+        const total = response.data.length;
+
+        // Asegurarnos de que la página actual sea válida
+        const totalPages = Math.ceil(total / rowsPerPage);
+        const currentPage =
+          page > totalPages && totalPages > 0 ? totalPages : page;
+
+        if (currentPage !== page) {
+          setPage(currentPage);
+        }
+
+        const paginatedUsers = response.data.slice(
+          (currentPage - 1) * rowsPerPage,
+          currentPage * rowsPerPage
+        );
+
+        setUsers(paginatedUsers);
+        setTotalUsers(total);
         setError(null);
       } catch (error) {
         setError("Error al cargar los usuarios. Por favor, intente más tarde.");
@@ -72,8 +95,9 @@ export function UserDashboardPage() {
         setLoading(false);
       }
     };
+
     fetchUsers();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const filteredUsers = users.filter((user) => {
     if (!user || !user.username || !user.email) return false;
@@ -83,12 +107,17 @@ export function UserDashboardPage() {
     );
   });
 
+  const paginatedFilteredUsers = filteredUsers.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
+
   const handleMenuClick = (user, event) => {
     setAnchorEl(event.currentTarget);
     setSelectedUser(user);
   };
 
-  const handleShowDetails = async(user) => {
+  const handleShowDetails = async (user) => {
     try {
       const userDetails = await userService.getUserById(user.id);
       setSelectedUser(userDetails);
@@ -100,7 +129,7 @@ export function UserDashboardPage() {
         severity: "error",
       });
     }
-  }
+  };
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
@@ -120,9 +149,14 @@ export function UserDashboardPage() {
   const handleCreateUser = async (userData) => {
     try {
       await userService.createUser(userData);
-      // Recargar la lista de usuarios después de crear uno nuevo
-      const updatedUsers = await userService.getAllUsers();
-      setUsers(updatedUsers.data);
+      // Recargar la lista de usuarios paginada después de crear uno nuevo
+      const response = await userService.getAllUsers();
+      const paginatedUsers = response.data.slice(
+        (page - 1) * rowsPerPage,
+        page * rowsPerPage
+      );
+      setUsers(paginatedUsers);
+      setTotalUsers(response.data.length);
       setNotification({
         open: true,
         message: "Usuario creado correctamente",
@@ -254,7 +288,11 @@ export function UserDashboardPage() {
                   <Box className="user-cell">
                     <Avatar
                       sx={{ width: 40, height: 40 }}
-                      src={user.profilePictureLink ? user.profilePictureLink : undefined}
+                      src={
+                        user.profilePictureLink
+                          ? user.profilePictureLink
+                          : undefined
+                      }
                     >
                       {!user.profilePictureLink && user.username.charAt(0)}
                     </Avatar>
@@ -278,10 +316,14 @@ export function UserDashboardPage() {
                   />
                 </TableCell>
                 <TableCell>
-                  {user.createdAt ? new Date(user.createdAt).toLocaleString() : ""}
+                  {user.createdAt
+                    ? new Date(user.createdAt).toLocaleString()
+                    : ""}
                 </TableCell>
                 <TableCell>
-                  {user.updatedAt ? new Date(user.updatedAt).toLocaleString() : ""}
+                  {user.updatedAt
+                    ? new Date(user.updatedAt).toLocaleString()
+                    : ""}
                 </TableCell>
                 <TableCell>{user.createdBy || "-"}</TableCell>
                 <TableCell>{user.updatedBy || "-"}</TableCell>
@@ -295,6 +337,17 @@ export function UserDashboardPage() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+        <Pagination
+          count={Math.ceil(totalUsers / rowsPerPage)}
+          page={page}
+          onChange={(event, value) => setPage(value)}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[10, 20, 30]}
+          sx={{ mt: 2 }}
+        />
+      </Box>
 
       {/* Menú contextual */}
       <Menu
@@ -343,10 +396,28 @@ export function UserDashboardPage() {
         user={selectedUser}
         onClose={() => setOpenModal(null)}
         onSave={async () => {
-          const updatedUsers = await userService.getAllUsers();
-          setUsers(updatedUsers.data);
-          setNotification({ open: true, message: "Usuario editado exitosamente!", severity: "success" });
-          setOpenModal(null);
+          try {
+            // Recargar la lista de usuarios paginada después de editar
+            const response = await userService.getAllUsers();
+            const paginatedUsers = response.data.slice(
+              (page - 1) * rowsPerPage,
+              page * rowsPerPage
+            );
+            setUsers(paginatedUsers);
+            setTotalUsers(response.data.length);
+            setNotification({
+              open: true,
+              message: "Usuario editado exitosamente!",
+              severity: "success",
+            });
+            setOpenModal(null);
+          } catch (error) {
+            setNotification({
+              open: true,
+              message: "Error al actualizar usuario",
+              severity: "error",
+            });
+          }
         }}
       />
 
@@ -362,11 +433,39 @@ export function UserDashboardPage() {
         onConfirm={async () => {
           try {
             await userService.deleteUser(selectedUser.id);
-            setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
-            setNotification({ open: true, message: "Usuario eliminado exitosamente!", severity: "success" });
+
+            // Recargar la lista de usuarios paginada después de eliminar
+            const response = await userService.getAllUsers();
+            const total = response.data.length;
+
+            // Verificar si necesitamos cambiar de página
+            const totalPages = Math.ceil(total / rowsPerPage);
+            const currentPage =
+              page > totalPages && totalPages > 0 ? totalPages : page;
+
+            if (currentPage !== page) {
+              setPage(currentPage);
+            }
+
+            const paginatedUsers = response.data.slice(
+              (currentPage - 1) * rowsPerPage,
+              currentPage * rowsPerPage
+            );
+
+            setUsers(paginatedUsers);
+            setTotalUsers(total);
+            setNotification({
+              open: true,
+              message: "Usuario eliminado exitosamente!",
+              severity: "success",
+            });
             setOpenModal(null);
           } catch (error) {
-            setNotification({ open: true, message: "Error al eliminar usuario", severity: "error" });
+            setNotification({
+              open: true,
+              message: "Error al eliminar usuario",
+              severity: "error",
+            });
           }
         }}
         userName={selectedUser?.username || ""}
@@ -387,8 +486,6 @@ export function UserDashboardPage() {
           {notification.message}
         </Alert>
       </Snackbar>
-
-      
     </Box>
   );
 }
