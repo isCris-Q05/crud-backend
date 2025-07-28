@@ -3,6 +3,7 @@ package com.backendtest.crud.Controller;
 import com.backendtest.crud.Configuration.JwtTokenProvider;
 import com.backendtest.crud.DTO.ApiResponse;
 import com.backendtest.crud.Entity.User;
+import com.backendtest.crud.Repository.UserRepository;
 import com.backendtest.crud.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -75,21 +76,25 @@ public class UserController {
 
         try {
             String currentUsername = extractUsernameFromToken(token);
+            User userToUpdate = userRepository.findById(id).orElseThrow(
+                    () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado")
+            );
+
+            // Verificar si el usuario que se está editando es el mismo que tiene la sesión
+            boolean isCurrentUser = userToUpdate.getUsername().equals(currentUsername);
+
             User updatedUser = userService.updateUser(id, userDetails, currentUsername);
 
-            // Verificar si el username cambió
-            if (!updatedUser.getUsername().equals(currentUsername)) {
+            // Solo generar nuevo token si es el usuario actual y cambió el username
+            if (isCurrentUser && !updatedUser.getUsername().equals(currentUsername)) {
                 String oldToken = token.substring(7);
                 String newToken = jwtTokenProvider.generateToken(updatedUser.getUsername());
 
-                // Permitir que ambos tokens funcionen temporalmente
                 jwtTokenProvider.allowBothTokens(oldToken, newToken);
 
-                // Devolver respuesta con ambos tokens
                 return ResponseEntity.ok()
                         .header("New-Token", newToken)
-                        .header("Old-Token", oldToken) // Para que el frontend sepa cuál reemplazar
-                        .header("Access-Control-Expose-Headers", "New-Token, Old-Token")
+                        .header("Access-Control-Expose-Headers", "New-Token")
                         .body(new ApiResponse<>(
                                 HttpStatus.OK.value(),
                                 "Usuario actualizado. Se ha generado un nuevo token.",
@@ -117,6 +122,9 @@ public class UserController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+    
+    @Autowired
+    private UserRepository userRepository;
     // metodo para extraer el username del token
     private String extractUsernameFromToken(String token) {
         if (token != null && token.startsWith("Bearer ")) {

@@ -62,7 +62,7 @@ const createUser = async (userData) => {
 const updateUser = async (id, userData) => {
     try {
         const oldToken = localStorage.getItem('token');
-        const oldUsername = localStorage.getItem('user');
+        const currentUser = localStorage.getItem('user');
         
         const response = await axios.put(`${API_URL}/${id}`, {
             username: userData.username,
@@ -75,22 +75,19 @@ const updateUser = async (id, userData) => {
             }
         });
 
-        // Manejar la actualización del token
+        // Verificar si hay un nuevo token en la respuesta
         const newToken = response.headers['new-token'];
-        const oldTokenFromHeader = response.headers['old-token'];
         
-        if (newToken && oldTokenFromHeader) {
-            // Verificar que coincida con nuestro token actual
-            if (oldTokenFromHeader === oldToken) {
-                localStorage.setItem('token', newToken);
-                localStorage.setItem('user', userData.username);
-                
-                // Actualizar axios para peticiones futuras
-                axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-                
-                // Forzar actualización de componentes que podrían estar usando el token antiguo
-                window.dispatchEvent(new Event('token-updated'));
-            }
+        // Solo actualizar el localStorage si estamos editando el usuario actual
+        if (newToken && currentUser === userData.originalUsername) {
+            localStorage.setItem('token', newToken);
+            localStorage.setItem('user', userData.username);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            
+            // Disparar evento para notificar a otros componentes
+            window.dispatchEvent(new CustomEvent('token-updated', {
+                detail: { newUsername: userData.username }
+            }));
         }
 
         return response.data;
@@ -98,7 +95,6 @@ const updateUser = async (id, userData) => {
         console.error('Error al actualizar usuario:', error);
         
         if (error.response?.status === 401) {
-            // Limpiar y recargar si hay error de autenticación
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';

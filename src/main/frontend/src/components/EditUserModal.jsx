@@ -33,6 +33,11 @@ export function EditUserModal({ open, user, onClose, onSave }) {
   const [success, setSuccess] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(false);
 
+  const [currentUsername, setCurrentUsername] = useState(localStorage.getItem('user'));
+
+  // Verificamos si estamos editando nuestro propio perfil 
+  const isCurrentUser = user?.username === currentUsername;
+
   // Efecto para manejar actualización de tokens
   useEffect(() => {
     const handleTokenUpdate = () => {
@@ -67,48 +72,37 @@ export function EditUserModal({ open, user, onClose, onSave }) {
     }));
   };
 
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+   const handleSubmit = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-      const updatedUser = {
-        username: formData.username,
-        email: formData.email,
-        profilePictureLink: formData.profilePictureLink || "",
-        isActive: formData.status === "active",
-      };
+            const updatedUser = {
+                username: formData.username,
+                email: formData.email,
+                profilePictureLink: formData.profilePictureLink || "",
+                isActive: formData.status === "active",
+                originalUsername: user.username // Enviar el username original
+            };
 
-      await userService.updateUser(user.id, updatedUser);
-      
-      // Mostrar mensaje de éxito apropiado
-      if (formData.username !== user.username) {
-        setSuccess('Usuario actualizado. Tu sesión se ha mantenido activa.');
-      } else {
-        setSuccess('Usuario actualizado exitosamente');
-      }
-      
-      // Cerrar el modal después de 1.5 segundos
-      setTimeout(() => {
-        onSave(); // Recargar datos
-        onClose(); // Cerrar modal
-      }, 1500);
-    } catch (error) {
-      // Manejar específicamente errores de autenticación
-      if (error.message.includes("401")) {
-        setError('Tu sesión ha expirado. Serás redirigido para iniciar sesión nuevamente.');
-        setTimeout(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-        }, 3000);
-      } else {
-        setError(error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+            await userService.updateUser(user.id, updatedUser);
+            
+            if (isCurrentUser && formData.username !== user.username) {
+                setSuccess('Usuario actualizado. Tu sesión se ha mantenido activa.');
+            } else {
+                setSuccess('Usuario actualizado exitosamente');
+            }
+            
+            setTimeout(() => {
+                onSave();
+                onClose();
+            }, 1500);
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
   return (
     <>

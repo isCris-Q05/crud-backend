@@ -133,7 +133,7 @@ public class UserService {
                     if (!existingUser.getId().equals(user.getId())) {
                         throw new ResponseStatusException(
                                 HttpStatus.CONFLICT,
-                                "El nombre de usuario ya está en uso por otro usuario"
+                                "El username ya está en uso por otro usuario"
                         );
                     }
                 }
