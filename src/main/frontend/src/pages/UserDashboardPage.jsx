@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {Snackbar} from "@mui/material";
+import Alert from "@mui/material/Alert";
+
 import {
   Box,
   Typography,
@@ -44,6 +47,11 @@ export function UserDashboardPage() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [openModal, setOpenModal] = useState(null);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -79,6 +87,20 @@ export function UserDashboardPage() {
     setSelectedUser(user);
   };
 
+  const handleShowDetails = async(user) => {
+    try {
+      const userDetails = await userService.getUserById(user.id);
+      setSelectedUser(userDetails);
+      setOpenModal("details");
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: "Error al obtener los detalles del usuario",
+        severity: "error",
+      });
+    }
+  }
+
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
@@ -100,9 +122,18 @@ export function UserDashboardPage() {
       // Recargar la lista de usuarios después de crear uno nuevo
       const updatedUsers = await userService.getAllUsers();
       setUsers(updatedUsers.data);
-      // Opcional: puedes retornar el último usuario si lo necesitas
+      setNotification({
+        open: true,
+        message: "Usuario creado correctamente",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Error al crear usuario:", error);
+      setNotification({
+        open: true,
+        message: "Error al crear usuario",
+        severity: "error",
+      });
       throw error;
     }
   };
@@ -280,9 +311,10 @@ export function UserDashboardPage() {
         onClose={handleCloseMenu}
       >
         <MenuItem
-          onClick={() => {
-            setOpenModal("details");
+          onClick={async () => {
             handleCloseMenu();
+            // Usar el usuario seleccionado del menu
+            await handleShowDetails(selectedUser);
           }}
         >
           <Visibility fontSize="small" sx={{ mr: 1 }} /> Ver detalles
@@ -319,9 +351,9 @@ export function UserDashboardPage() {
         user={selectedUser}
         onClose={() => setOpenModal(null)}
         onSave={async () => {
-          // Recargamos la lista de usuarios despues que editamos
           const updatedUsers = await userService.getAllUsers();
           setUsers(updatedUsers.data);
+          setNotification({ open: true, message: "Usuario editado exitosamente!", severity: "success" });
           setOpenModal(null);
         }}
       />
@@ -335,12 +367,36 @@ export function UserDashboardPage() {
       <DeleteConfirmModal
         isOpen={openModal === "delete"}
         onClose={() => setOpenModal(null)}
-        onConfirm={() => {
-          setUsers(users.filter((u) => u.id !== selectedUser?.id));
-          setOpenModal(null);
+        onConfirm={async () => {
+          try {
+            await userService.deleteUser(selectedUser.id);
+            setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+            setNotification({ open: true, message: "Usuario eliminado exitosamente!", severity: "success" });
+            setOpenModal(null);
+          } catch (error) {
+            setNotification({ open: true, message: "Error al eliminar usuario", severity: "error" });
+          }
         }}
         userName={selectedUser?.username || ""}
       />
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
+
+      
     </Box>
   );
 }

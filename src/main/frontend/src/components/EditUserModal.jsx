@@ -21,13 +21,18 @@ import { useState, useEffect } from "react"; // Añadimos useEffect
 import userService from "../services/userService"; // Agrega la importación
 
 export function EditUserModal({ open, user, onClose, onSave }) {
+  // si no hay usuario, no se abre el modal
+  if (!user) return null;
   const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    status: "active",
-    profilePictureLink: "",
+    username: user.username || "",
+    email: user.email || "",
+    status: user.isActive === false ? "inactive" : "active",
+    profilePictureLink: user.profilePictureLink || "",
 
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Efecto para actualizar el estado cuando cambia el usuario
   useEffect(() => {
@@ -35,7 +40,7 @@ export function EditUserModal({ open, user, onClose, onSave }) {
       setFormData({
         username: user.username || "",
         email: user.email || "",
-        status: user.status || "active",
+        status: user.isActive === false ? "inactive" : "active",
         profilePictureLink: user.profilePictureLink || "",
       });
     }
@@ -56,18 +61,19 @@ export function EditUserModal({ open, user, onClose, onSave }) {
     }
     try {
       // Llama al endpoint de edición
-      await userService.updateUser(user.id, {
+      const updatedUser = {
         username: formData.username,
         email: formData.email,
         profilePictureLink: formData.profilePictureLink || "",
-        isActive: formData.status === "active",
-      });
+        isActive: formData.status === "active" ? true : false
+      }
+      await userService.updateUser(user.id, updatedUser);
       onSave({
         ...user,
         username: formData.username,
         email: formData.email,
         profilePictureLink: formData.profilePictureLink || "",
-        isActive: formData.status === "active",
+        isActive: formData.status === "active" ? true : false
       });
       onClose();
     } catch (error) {

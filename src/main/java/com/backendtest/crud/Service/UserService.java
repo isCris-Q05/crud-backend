@@ -150,6 +150,11 @@ public class UserService {
                 user.setProfilePictureLink(userDetails.getProfilePictureLink());
             }
 
+            // tambien de estado isActive
+            if (userDetails.getIsActive() != null) {
+                user.setIsActive(userDetails.getIsActive());
+            }
+
             // Setear updated_by con el username del usuario que realiza la actualización
             user.setUpdatedBy(currentUsername);
             return userRepository.save(user); // @PreUpdate actualizará automáticamente updated_at

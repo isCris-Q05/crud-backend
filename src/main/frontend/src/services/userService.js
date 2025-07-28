@@ -25,7 +25,7 @@ const getUserById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/${id}`);
     console.log("Usuario obtenido:", response.data);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error("Error al obtener usuario:", error.response?.data || error.message);
     throw error;
@@ -40,12 +40,13 @@ const createUser = async (userData) => {
           password: userData.password,
           email: userData.email,
           profilePictureLink: userData.profile_picture_link || null,
-          isActive: userData.isActive ?? true,
+          isActive: userData.isActive === false ? false : true, // por defecto es true
         }, {
           headers: {
             'Content-Type': 'application/json'
           }
         });
+        
         console.log("Usuario creado");
         return response.data
     } catch (error) {
@@ -56,8 +57,13 @@ const createUser = async (userData) => {
 
 const updateUser = async(id, userData) => {
     try {
-        console.log(`Imagen: ${userData.profilePictureLink}`);
-        const response = await axios.put(`${API_URL}/${id}`, userData);
+        console.log(`Estado: ${userData.isActive}`);
+        const response = await axios.put(`${API_URL}/${id}`, {
+          username: userData.username,
+          email: userData.email,
+          profilePictureLink: userData.profilePictureLink || null,
+          isActive: userData.isActive === false ? false : true, // por defecto es true
+        });
         // Usuario actualizado
         return response.data;
     } catch (error) {

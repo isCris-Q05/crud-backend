@@ -23,7 +23,6 @@ export function UserModal({ open, onClose, mode, userData, onCreateSuccess }) {
     username: userData?.username || "",
     email: userData?.email || "",
     password: "", // solo para la creacion
-    role: userData?.role || "user",
     active: userData?.status === "active" || true,
     profile_picture_link: userData?.profile_picture_link || "",
   });
@@ -53,8 +52,7 @@ export function UserModal({ open, onClose, mode, userData, onCreateSuccess }) {
         email: formData.email,
         password: formData.password,
         profile_picture_link: formData.profile_picture_link, // Transformación a camelCase
-        role: formData.role,
-        active: formData.active,
+        isActive: formData.active === true ? true : false, // por defecto es true
       };
 
       const createdUser = await onCreateSuccess(newUser);
