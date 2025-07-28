@@ -40,6 +40,7 @@ import "../styles/UserDashboardPage.css";
 import { EditUserModal } from "../components/EditUserModal";
 import authService from "../services/authService";
 import userService from "../services/userService";
+import UserAvatar from "../components/UserAvatar";
 
 export function UserDashboardPage() {
   const [users, setUsers] = useState([]);
@@ -172,16 +173,7 @@ export function UserDashboardPage() {
 
         {/* Sección derecha con avatar y botón */}
         <Box className="user-actions">
-          <Avatar
-            sx={{
-              bgcolor: "primary.main",
-              width: 44,
-              height: 44,
-              fontSize: "1.25rem",
-            }}
-          >
-            {users[0]?.username?.charAt(0) || "A"}
-          </Avatar>
+          <UserAvatar />
           <Button
             onClick={handleLogout}
             startIcon={<Logout />}
